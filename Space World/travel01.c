@@ -83,22 +83,29 @@ int main(void) {
     while (1) {
         printf("\n--- Navigation Console ---\n");
         printf("1. Display Planet Data\n");
-        printf("2. Show Ephemeris Table for Mars\n");
+        printf("2. Planet Position Formulae\n");
         printf("3. Compute Hohmann Transfer Time\n");
         printf("4. Enter Your Calculated Arrival Coordinates\n");
         printf("5. Departure Time\n");
+        // printf("9. Show Ephemeris Table for Mars\n");
         printf("0. Quit\n");
         printf("Enter your choice: ");
         scanf("%d", &choice);
         
         // Display planet information.
         if (choice == 1) {
-            printf("\nPlanet Data:\n");
-            printf("Earth: Orbit Radius = %.3f AU, Orbital Period = %.2f days\n", earth.orbitRadius, earth.orbitalPeriod);
+            printf("\nEarth: Orbit Radius = %.3f AU, Orbital Period = %.2f days\n", earth.orbitRadius, earth.orbitalPeriod);
             printf("Mars:  Orbit Radius = %.3f AU, Orbital Period = %.2f days\n", mars.orbitRadius, mars.orbitalPeriod);
         
-        // Show an ephemeris table.
+        // Planet Position Formulae
         } else if (choice == 2) {
+          printf("angle = 2 * PI * (time / planet.orbitalPeriod)\n");
+          printf("X = planet.orbitRadius * cos(angle)");
+          printf("Y = planet.orbitRadius * sin(angle)");
+          printf("0.0 (2D approximation: movement in the ecliptic plane only");
+        
+        // Show an ephemeris table.
+        } else if (choice == 9) {
             double start, end, interval;
             printf("Enter start time (in days) for the ephemeris table: ");
             scanf("%lf", &start);
@@ -122,9 +129,9 @@ int main(void) {
         // Let the player input their calculated arrival coordinates.
         } else if (choice == 4) {
             Vector3D playerCalculated;
-            printf("\nYour calculated X coordinate: ");
+            printf("\nCalculated X coordinate: ");
             scanf("%lf", &playerCalculated.x);
-            printf("Enter your calculated Y coordinate: ");
+            printf("Calculated Y coordinate: ");
             scanf("%lf", &playerCalculated.y);
             playerCalculated.z = 0.0;
 
