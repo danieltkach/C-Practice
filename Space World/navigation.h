@@ -3,7 +3,7 @@
 
 #include "planet.h"
 
-// Encapsulate the ship's state in a structure.
+// ShipState structure encapsulates the ship's state.
 typedef struct {
     double currentTime;
     Vector3D shipPosition;
@@ -12,17 +12,17 @@ typedef struct {
         char description[256];
         Vector3D position;
         double arrivalTime;
-    } currentLocation;
+    } currentDestination;
 } ShipState;
 
-// Function prototypes:
+// Function prototypes for navigation functions.
 void printInfo(ShipState *state);
 void printFormulae(void);
 double computeHohmannTransferTime(double r1, double r2);
 double computePhasingTime(Vector3D current, Vector3D target, double orbitalPeriod);
 void hohmannTransferTime(ShipState *state);
 void travelSystemExecute(ShipState *state);
-void determineLocation(Vector3D pos, double time, ShipState *state);
-void updateCurrentLocation(ShipState *state, double arrivalTime);
+void determineDestination(Vector3D pos, double time, ShipState *state);
+void updateCurrentDestination(ShipState *state, double arrivalTime);
 
 #endif

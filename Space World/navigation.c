@@ -5,10 +5,10 @@
 #include <math.h>
 #include <string.h>
 
-#define THRESHOLD 0.1  // distance tolerance (in AU)
+#define THRESHOLD 0.1  // in AU
 #define PI 3.141592653589793
 
-// Prints the current ship status with custom formatting.
+// Prints ship status info with custom formatting.
 void printInfo(ShipState *state) {
     double distanceFromSun = sqrt(state->shipPosition.x * state->shipPosition.x +
                                   state->shipPosition.y * state->shipPosition.y);
@@ -17,10 +17,10 @@ void printInfo(ShipState *state) {
     printf("-P- Current Ship Position:\n");
     printf("  x = %.4f AU\n  y = %.4f AU\n  z = %.4f AU\n",
            state->shipPosition.x, state->shipPosition.y, state->shipPosition.z);
-    printf("\n-L- Location data: \n");
+    printf("\n-L- Destination data: \n");
     printf("  Distance from the Sun: %.4f AU\n", distanceFromSun);
-    printf("  Name: %s\n", state->currentLocation.name);
-    printf("  Description: %s\n", state->currentLocation.description);
+    printf("  Name: %s\n", state->currentDestination.name);
+    printf("  Description: %s\n", state->currentDestination.description);
     printf("\n<-> Oxygen levels: Not available\n");
     printf("@^@ Fuel levels: Not available\n");
     printf("-+- Food levels: Unknown\n");
@@ -34,8 +34,8 @@ void printFormulae(void) {
     printf("Z = 0.0 (2D approximation: movement in the ecliptic plane only)\n");
 }
 
-// Computes the Hohmann transfer time (in days) between two circular orbits.
-// Returns 0 if the orbit radii are (almost) identical.
+// Computes Hohmann transfer time (in days) between two orbits.
+// Returns 0 if radii are nearly identical.
 double computeHohmannTransferTime(double r1, double r2) {
     if (fabs(r1 - r2) < 1e-6)
         return 0.0;
@@ -44,8 +44,7 @@ double computeHohmannTransferTime(double r1, double r2) {
     return period_transfer / 2.0;
 }
 
-// Computes phasing time for same-orbit transfers.
-// Calculates the fraction of an orbit (based on angular difference) and returns corresponding time.
+// Computes phasing time for same-orbit transfers based on angular difference.
 double computePhasingTime(Vector3D current, Vector3D target, double orbitalPeriod) {
     double angleCurrent = atan2(current.y, current.x);
     double angleTarget  = atan2(target.y, target.x);
@@ -55,7 +54,7 @@ double computePhasingTime(Vector3D current, Vector3D target, double orbitalPerio
     return (dtheta / (2 * PI)) * orbitalPeriod;
 }
 
-// Displays either the Hohmann transfer time or phasing time (if same orbit) based on input orbit radii.
+// Displays Hohmann or phasing transfer time based on input orbit radii.
 void hohmannTransferTime(ShipState *state) {
     double playerOrbitRadius, destinationOrbitRadius;
     printf("\nYour orbit radius (AU): ");
@@ -79,7 +78,7 @@ void hohmannTransferTime(ShipState *state) {
     }
 }
 
-// TRAVEL SYSTEM: Prompts the player to input their calculated trajectory, then updates the ShipState.
+// TRAVEL SYSTEM: Prompts for trajectory and arrival time, then updates ShipState.
 void travelSystemExecute(ShipState *state) {
     Vector3D playerCalculated;
     printf("\nEnter your calculated X coordinate: ");
@@ -94,11 +93,11 @@ void travelSystemExecute(ShipState *state) {
     
     state->shipPosition = playerCalculated;
     state->currentTime = arrivalTime;
-    updateCurrentLocation(state, arrivalTime);
+    updateCurrentDestination(state, arrivalTime);
 }
 
-// Determines the current location by comparing ship's position to known positions (Earth and Mars).
-void determineLocation(Vector3D pos, double time, ShipState *state) {
+// Determines the current destination by comparing the ship's position with known planets.
+void determineDestination(Vector3D pos, double time, ShipState *state) {
     Planet earth = { "Earth", 1.0, 365.25 };
     Planet mars  = { "Mars", 1.523, 687.0 };
     Vector3D earthPos = getPlanetPosition(earth, time);
@@ -108,26 +107,26 @@ void determineLocation(Vector3D pos, double time, ShipState *state) {
     double dMars = calculateDistance(pos, marsPos);
     
     if (dEarth < THRESHOLD) {
-         strcpy(state->currentLocation.name, "Earth");
-         strcpy(state->currentLocation.description, "Earth: our vibrant blue home planet.");
-         state->currentLocation.position = earthPos;
-         state->currentLocation.arrivalTime = time;
+         strcpy(state->currentDestination.name, "Earth");
+         strcpy(state->currentDestination.description, "Earth: our vibrant blue home planet.");
+         state->currentDestination.position = earthPos;
+         state->currentDestination.arrivalTime = time;
     } else if (dMars < THRESHOLD) {
-         strcpy(state->currentLocation.name, "Mars");
-         strcpy(state->currentLocation.description, "Mars: the Red Planet, a potential destination for exploration.");
-         state->currentLocation.position = marsPos;
-         state->currentLocation.arrivalTime = time;
+         strcpy(state->currentDestination.name, "Mars");
+         strcpy(state->currentDestination.description, "Mars: the Red Planet, a potential destination for exploration.");
+         state->currentDestination.position = marsPos;
+         state->currentDestination.arrivalTime = time;
     } else {
-         strcpy(state->currentLocation.name, "Unknown");
-         strcpy(state->currentLocation.description, "You have arrived at an unknown celestial location.");
-         state->currentLocation.position = pos;
-         state->currentLocation.arrivalTime = time;
+         strcpy(state->currentDestination.name, "Unknown");
+         strcpy(state->currentDestination.description, "You have arrived at an unknown celestial destination.");
+         state->currentDestination.position = pos;
+         state->currentDestination.arrivalTime = time;
     }
 }
 
-// Updates the current location in the ShipState.
-void updateCurrentLocation(ShipState *state, double arrivalTime) {
+// Updates the current destination in the ShipState.
+void updateCurrentDestination(ShipState *state, double arrivalTime) {
     state->currentTime = arrivalTime;
-    determineLocation(state->shipPosition, state->currentTime, state);
-    printf("You have arrived at %s.\n", state->currentLocation.name);
+    determineDestination(state->shipPosition, state->currentTime, state);
+    printf("You have arrived at %s.\n", state->currentDestination.name);
 }
