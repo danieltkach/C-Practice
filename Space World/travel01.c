@@ -36,9 +36,10 @@ double calculateDistance(Vector3D a, Vector3D b) {
 
 // Function to compute the Hohmann transfer time between two circular orbits.
 // Uses a simplified form of Kepler's third law.
+// The result is in days.
 double computeHohmannTransferTime(double r1, double r2) {
     double a_transfer = (r1 + r2) / 2.0;         // Semi-major axis of the transfer orbit.
-    double period_transfer = 365.25 * pow(a_transfer, 1.5);  // Full period of the transfer orbit (Earth's period as reference).
+    double period_transfer = 365.25 * pow(a_transfer, 1.5);  // Full period (Earth's period as reference).
     return period_transfer / 2.0;                // Travel time is half the orbital period.
 }
 
@@ -72,82 +73,83 @@ int main(void) {
     Planet earth = { "Earth", 1.0, 365.25 };
     Planet mars  = { "Mars", 1.523, 687.0 };
     
-    // Assume the space station is at Earth's position at departure time.
-    double departureTime = 100.0; // in days from the reference.
-    Vector3D earthPos = getPlanetPosition(earth, departureTime);
+    // Starting condition: the ship is at Earth's position at departure time.
+    double departureTime = 100.0; // in days from the reference epoch.
+    Vector3D shipPosition = getPlanetPosition(earth, departureTime);
+    
+    // Display initial mission briefing.
     printf("At departure time = %.2f days, Earth's space station position is:\n", departureTime);
-    printf("  x = %.4f AU, y = %.4f AU\n", earthPos.x, earthPos.y);
+    printf("  x = %.4f AU\n  y = %.4f AU\n", shipPosition.x, shipPosition.y);
     
     // Interactive Menu Loop.
-    int choice = 0;
+    char choice;
     while (1) {
         printf("\n--- Navigation Console ---\n");
-        printf("1. Display Planet Data\n");
-        printf("2. Planet Position Formulae\n");
-        printf("3. Compute Hohmann Transfer Time\n");
-        printf("4. Enter Your Calculated Arrival Coordinates\n");
-        printf("5. Departure Time\n");
-        // printf("9. Show Ephemeris Table for Mars\n");
-        printf("0. Quit\n");
+        printf("P > Display Planet Data\n");
+        printf("F > Planet Position Formulae\n");
+        printf("H > Compute Hohmann Transfer Time\n");
+        printf("T > TRAVEL SYSTEM\n");
+        printf("I > Info for current time and space\n");
+        printf("0 > Quit\n");
         printf("Enter your choice: ");
-        scanf("%d", &choice);
+        scanf(" %c", &choice);
         
-        // Display planet information.
-        if (choice == 1) {
+        if (choice == 'P' || choice == 'p') {
             printf("\nEarth: Orbit Radius = %.3f AU, Orbital Period = %.2f days\n", earth.orbitRadius, earth.orbitalPeriod);
             printf("Mars:  Orbit Radius = %.3f AU, Orbital Period = %.2f days\n", mars.orbitRadius, mars.orbitalPeriod);
         
-        // Planet Position Formulae
-        } else if (choice == 2) {
-          printf("angle = 2 * PI * (time / planet.orbitalPeriod)\n");
-          printf("X = planet.orbitRadius * cos(angle)");
-          printf("Y = planet.orbitRadius * sin(angle)");
-          printf("0.0 (2D approximation: movement in the ecliptic plane only");
-        
-        // Show an ephemeris table.
-        } else if (choice == 9) {
-            double start, end, interval;
-            printf("Enter start time (in days) for the ephemeris table: ");
-            scanf("%lf", &start);
-            printf("Enter end time (in days) for the ephemeris table: ");
-            scanf("%lf", &end);
-            printf("Enter time interval (in days): ");
-            scanf("%lf", &interval);
-            printEphemeris(mars, start, end, interval);
+        } else if (choice == 'F' || choice == 'f') {
+            printf("\nANGLE = 2 * PI * (time / planet.orbitalPeriod)\n");
+            printf("X = planet.orbitRadius * cos(ANGLE)\n");
+            printf("Y = planet.orbitRadius * sin(ANGLE)\n");
+            printf("Z = 0.0 (2D approximation: movement in the ecliptic plane only)\n");
             
-        // Compute Hohmann Transfer Time
-        } else if (choice == 3) {
-          double playerOrbitRadius;
-          double destinationOrbitRadius;
-          printf("\nYour orbit radius (AU): ");
-          scanf("%lf", &playerOrbitRadius);
-          printf("Destination orbit radius (AU): ");
-          scanf("%lf", &destinationOrbitRadius);
-          double transferTime = computeHohmannTransferTime(playerOrbitRadius, destinationOrbitRadius);
-          printf("Calculated Hohmann transfer time: %.2f days\n", transferTime);
-
-        // Let the player input their calculated arrival coordinates.
-        } else if (choice == 4) {
+        } else if (choice == 'H' || choice == 'h') {
+            double playerOrbitRadius;
+            double destinationOrbitRadius;
+            printf("\nYour orbit radius (AU): ");
+            scanf("%lf", &playerOrbitRadius);
+            printf("Destination orbit radius (AU): ");
+            scanf("%lf", &destinationOrbitRadius);
+            double transferTime = computeHohmannTransferTime(playerOrbitRadius, destinationOrbitRadius);
+            printf("Calculated Hohmann transfer time: %.2f days\n", transferTime);
+        
+        } else if (choice == 'T' || choice == 't') {
+            // TRAVEL SYSTEM: Let the player input their calculated trajectory.
             Vector3D playerCalculated;
-            printf("\nCalculated X coordinate: ");
+            printf("\nEnter your calculated X coordinate: ");
             scanf("%lf", &playerCalculated.x);
-            printf("Calculated Y coordinate: ");
+            printf("Enter your calculated Y coordinate: ");
             scanf("%lf", &playerCalculated.y);
-            playerCalculated.z = 0.0;
-
+            printf("Enter your calculated Z coordinate: ");
+            scanf("%lf", &playerCalculated.z);
             double arrivalTime;
-            printf("Arrival time: ");
+            printf("Enter your calculated Arrival Time (in days): ");
             scanf("%lf", &arrivalTime);
             
+            // Compute target Mars position based on arrival time.
             Vector3D targetMarsPos = getPlanetPosition(mars, arrivalTime);
-            checkNavigation(playerCalculated, targetMarsPos);
-       
-        // Departure (Current) Time.
-        } else if (choice == 5) {
-          printf("Departure Time (current time): %.2f\n", departureTime);
-
-        // Exit
-        } else if (choice == 0) {
+            // Check player's input against the target.
+            int result = checkNavigation(playerCalculated, targetMarsPos);
+            
+            // Update ship's position and time.
+            shipPosition = playerCalculated;
+            departureTime = arrivalTime;
+            if(result) {
+                printf("Your ship has successfully arrived at the intended destination.\n");
+            } else {
+                printf("Your ship landed off-course. Adjust your trajectory and try again.\n");
+            }
+            
+        } else if (choice == 'I' || choice == 'i') {
+            double distanceFromSun = sqrt(shipPosition.x * shipPosition.x + shipPosition.y * shipPosition.y);
+            printf("\n--- Current Space Info ---\n");
+            printf("Current Time (departure time): %.2f days\n", departureTime);
+            printf("Current Ship Position:\n");
+            printf("  x = %.4f AU\n  y = %.4f AU\n  z = %.4f AU\n", shipPosition.x, shipPosition.y, shipPosition.z);
+            printf("Distance from the Sun: %.4f AU\n", distanceFromSun);
+            
+        } else if (choice == '0') {
             printf("Exiting Navigation Console. Safe travels!\n");
             break;
         } else {
