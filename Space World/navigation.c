@@ -80,41 +80,52 @@ void hohmannTransferTime(ShipState *state) {
 
 // TRAVEL SYSTEM: Prompts for trajectory and arrival time, then updates ShipState.
 void travelSystemExecute(ShipState *state) {
-    Vector3D playerCalculated;
-    printf("\nEnter your calculated X coordinate: ");
-    scanf("%lf", &playerCalculated.x);
-    printf("Enter your calculated Y coordinate: ");
-    scanf("%lf", &playerCalculated.y);
-    printf("Enter your calculated Z coordinate: ");
-    scanf("%lf", &playerCalculated.z);
-    double arrivalTime;
-    printf("Enter your calculated Arrival Time (in days): ");
-    scanf("%lf", &arrivalTime);
-    
-    state->shipPosition = playerCalculated;
-    state->currentTime = arrivalTime;
-    updateCurrentDestination(state, arrivalTime);
+  Vector3D playerCalculated;
+  double travelDuration;
+  printf("\nEnter your calculated X coordinate: ");
+  scanf("%lf", &playerCalculated.x);
+  printf("Enter your calculated Y coordinate: ");
+  scanf("%lf", &playerCalculated.y);
+  printf("Enter your calculated Z coordinate: ");
+  scanf("%lf", &playerCalculated.z);
+  printf("Enter your travel duration (in days): ");
+  scanf("%lf", &travelDuration);
+  
+  // Update the ship's state.
+  state->shipPosition = playerCalculated;
+  state->currentTime += travelDuration;  // Add travel duration to current time.
+  updateCurrentDestination(state, state->currentTime);
 }
 
+
 // Determines the current destination by comparing the ship's position with known planets.
+#include "destinations.h" // Include your destinations module
+
 void determineDestination(Vector3D pos, double time, ShipState *state) {
-    Planet earth = { "Earth", 1.0, 365.25 };
-    Planet mars  = { "Mars", 1.523, 687.0 };
-    Vector3D earthPos = getPlanetPosition(earth, time);
-    Vector3D marsPos  = getPlanetPosition(mars, time);
-    
-    double dEarth = calculateDistance(pos, earthPos);
-    double dMars = calculateDistance(pos, marsPos);
-    
-    if (dEarth < THRESHOLD) {
-         strcpy(state->currentDestination.name, "Earth");
-         strcpy(state->currentDestination.description, "Earth: our vibrant blue home planet.");
-         state->currentDestination.position = earthPos;
-         state->currentDestination.arrivalTime = time;
-    } else if (dMars < THRESHOLD) {
-         strcpy(state->currentDestination.name, "Mars");
-         strcpy(state->currentDestination.description, "Mars: the Red Planet, a potential destination for exploration.");
-         state->currentDestination.position = marsPos;
+    // Loop over all known destinations.
+    Planet *destinationFound = NULL;
+    for (int i = 0; i < knownDestinationsCount; i++) {
+        Vector3D destPos = getPlanetPosition(knownDestinations[i], time);
+        double d = calculateDistance(pos, destPos);
+        if (d < THRESHOLD) {
+            destinationFound = &knownDestinations[i];
+            break;
+        }
+    }
+
+    if (destinationFound != NULL) {
+         strcpy(state->currentDestination.name, destinationFound->name);
+         // For description, you might hard-code some or call a helper function.
+         if (strcmp(destinationFound->name, "Earth") == 0) {
+             strcpy(state->currentDestination.description, "Earth: our vibrant blue home planet.");
+         } else if (strcmp(destinationFound->name, "Mars") == 0) {
+             strcpy(state->currentDestination.description, "Mars: the Red Planet, a potential destination for exploration.");
+         } else if (strcmp(destinationFound->name, "Saturn") == 0) {
+             strcpy(state->currentDestination.description, "Saturn: adorned with magnificent rings.");
+         } else {
+             strcpy(state->currentDestination.description, "A known celestial destination.");
+         }
+         state->currentDestination.position = getPlanetPosition(*destinationFound, time);
          state->currentDestination.arrivalTime = time;
     } else {
          strcpy(state->currentDestination.name, "Unknown");
@@ -123,6 +134,7 @@ void determineDestination(Vector3D pos, double time, ShipState *state) {
          state->currentDestination.arrivalTime = time;
     }
 }
+
 
 // Updates the current destination in the ShipState.
 void updateCurrentDestination(ShipState *state, double arrivalTime) {

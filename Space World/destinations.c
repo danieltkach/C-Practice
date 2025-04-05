@@ -32,3 +32,4 @@ Planet *getDestinationByName(const char *name) {
     }
     return NULL;  // Not found.
 }
+
